@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ========== TIDB CLOUD CONNECTION ==========
+// ========== TIDB CLOUD CONNECTION WITH SSL ==========
 const pool = mysql.createPool({
     host: process.env.TIDB_HOST,
     port: parseInt(process.env.TIDB_PORT) || 4000,
@@ -17,39 +17,44 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     enableKeepAlive: true,
-    keepAliveInitialDelay: 0
+    keepAliveInitialDelay: 0,
+    // 🔑 THIS IS THE FIX - SSL/TLS REQUIRED
+    ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+    }
 });
 
-// ========== TEST DATABASE CONNECTION ==========
+// Test connection with SSL
 async function testConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('✅ TiDB Cloud connected successfully!');
+        console.log('✅ TiDB Cloud connected successfully (SSL enabled)!');
         connection.release();
         return true;
     } catch (error) {
         console.error('❌ TiDB Cloud connection failed:', error.message);
+        console.error('💡 Make sure you are using TLS v1.2 or higher');
         return false;
     }
 }
 
-// ========== HEALTH CHECK API ==========
+// Health Check
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         message: 'Server is running!',
         timestamp: new Date().toISOString(),
-        database: process.env.TIDB_DATABASE
+        ssl: 'enabled'
     });
 });
 
-// ========== SAVE INVOICE API ==========
+// Save Invoice
 app.post('/api/invoices', async (req, res) => {
     try {
         const { invoiceNo, date, items, grandTotal, words } = req.body;
         
-        // Validate required fields
-        if (!invoiceNo || !date || !items || !grandTotal) {
+        if (!invoiceNo || !date || !items) {
             return res.status(400).json({ 
                 success: false, 
                 error: 'Missing required fields' 
@@ -57,9 +62,7 @@ app.post('/api/invoices', async (req, res) => {
         }
         
         const [result] = await pool.execute(
-            `INSERT INTO invoices 
-            (invoice_number, invoice_date, items_data, grand_total, total_words) 
-            VALUES (?, ?, ?, ?, ?)`,
+            'INSERT INTO invoices (invoice_number, invoice_date, items_data, grand_total, total_words) VALUES (?, ?, ?, ?, ?)',
             [invoiceNo, date, JSON.stringify(items), grandTotal, words]
         );
         
@@ -78,7 +81,7 @@ app.post('/api/invoices', async (req, res) => {
     }
 });
 
-// ========== GET ALL INVOICES API ==========
+// Get All Invoices
 app.get('/api/invoices', async (req, res) => {
     try {
         const [rows] = await pool.execute(
@@ -106,7 +109,7 @@ app.get('/api/invoices', async (req, res) => {
     }
 });
 
-// ========== GET SINGLE INVOICE API ==========
+// Get Single Invoice
 app.get('/api/invoices/:id', async (req, res) => {
     try {
         const [rows] = await pool.execute(
@@ -142,7 +145,7 @@ app.get('/api/invoices/:id', async (req, res) => {
     }
 });
 
-// ========== UPDATE INVOICE API ==========
+// Update Invoice
 app.put('/api/invoices/:id', async (req, res) => {
     try {
         const { invoiceNo, date, items, grandTotal, words } = req.body;
@@ -170,7 +173,7 @@ app.put('/api/invoices/:id', async (req, res) => {
     }
 });
 
-// ========== DELETE INVOICE API ==========
+// Delete Invoice
 app.delete('/api/invoices/:id', async (req, res) => {
     try {
         const [result] = await pool.execute(
@@ -199,11 +202,13 @@ app.delete('/api/invoices/:id', async (req, res) => {
     }
 });
 
-// ========== ROOT ENDPOINT ==========
+// Root endpoint
 app.get('/', (req, res) => {
     res.json({
         name: 'Pluto\'s Restaurant Invoice API',
         version: '1.0.0',
+        status: 'running',
+        ssl: 'enabled',
         endpoints: {
             health: 'GET /api/health',
             invoices: 'GET /api/invoices',
@@ -215,7 +220,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// ========== START SERVER ==========
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
     console.log(`🚀 Server running on port ${PORT}`);

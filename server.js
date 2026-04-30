@@ -6,13 +6,13 @@ require('dotenv').config();
 const app = express();
 
 // ========== CORS CONFIGURATION ==========
-// Allow your Netlify frontend to connect
+// Corrected and simplified CORS
 const allowedOrigins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'http://localhost:8000',
-    'https://plutoswebapp.netlify.app',  // YOUR NETLIFY URL
-    'https://*.netlify.app'  // Allow all Netlify previews
+    'https://plutoswebapp.netlify.app',  // YOUR NETLIFY URL (Fix typo: plutos not pulutos)
+    'https://*.netlify.app'
 ];
 
 app.use(cors({
@@ -22,9 +22,8 @@ app.use(cors({
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            // For development, you can log the origin to debug
-            console.log('Origin:', origin);
-            callback(null, true); // Allow temporarily for testing
+            console.log('Blocked origin:', origin);
+            callback(null, false); // Better to block unknown origins for security
         }
     },
     credentials: true

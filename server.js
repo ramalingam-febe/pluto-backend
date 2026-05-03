@@ -14,9 +14,9 @@ app.use(express.json());
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'gateway01.ap-northeast-1.prod.aws.tidbcloud.com',
     port: process.env.DB_PORT || 4000,
-    user: process.env.DB_USER || 'your_username',
-    password: process.env.DB_PASSWORD || 'your_password',
-    database: process.env.DB_NAME || 'pluto_restaurant',
+    user: process.env.DB_USER || 'koQBsMLYytSui1f.root',
+    password: process.env.DB_PASSWORD || 'VV3IoTlN2hYtc2lx',
+    database: process.env.DB_NAME || 'pluto_invoice',
     ssl: {
         minVersion: 'TLSv1.2',
         rejectUnauthorized: true

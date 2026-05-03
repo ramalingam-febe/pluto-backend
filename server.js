@@ -12,11 +12,11 @@ app.use(express.json());
 
 // Database connection pool with FIXED SSL configuration
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'gateway01.ap-northeast-1.prod.aws.tidbcloud.com',
-    port: process.env.DB_PORT || 4000,
-    user: process.env.DB_USER || 'koQBsMLYytSui1f.root',
-    password: process.env.DB_PASSWORD || 'VV3IoTlN2hYtc2lx',
-    database: process.env.DB_NAME || 'pluto_invoice',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     ssl: {
         minVersion: 'TLSv1.2',
         rejectUnauthorized: false  // CHANGE THIS TO false FOR TiDB SERVERLESS
